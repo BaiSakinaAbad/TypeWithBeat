@@ -5,6 +5,32 @@ const LETTERS_UPPER = LETTERS_LOWER.toUpperCase();
 const DIGITS = "0123456789";
 const PUNCTUATION = "`~!@#$%^&*()_+-=[]\\{}|;':\",./<>?";
 
+// Utility functions
+function randomChoice(collection) {
+  return collection[Math.floor(Math.random() * collection.length)];
+}
+
+function setLocal(key, value) {
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+function getLocal(key) {
+  const item = window.localStorage.getItem(key);
+  return item === null ? undefined : JSON.parse(item);
+}
+
+function escapeSpecialRegExpChars(str) {
+  return str.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, "\\$&");
+}
+
+function rootSelector(selector) {
+  return document.querySelector(selector);
+}
+
+function rootSelectorAll(selector) {
+  return document.querySelectorAll(selector);
+}
+
 class TypingPractice {
   constructor(root) {
     this.dom = {
@@ -12,20 +38,45 @@ class TypingPractice {
       given: root.querySelector(".given"),
       typed: root.querySelector(".typed"),
       input: root.querySelector("input"),
+      count: root.querySelector(".count"),
+      wpm: document.querySelector("#wpm span"),
+      accuracy: document.querySelector("#accuracy span"),
+      beatDeviation: document.querySelector("#beatDeviation span"),
     };
 
     this.bufferSize = 35;
     this.focused = false;
     this.maxWordLength = 9;
     this.totalCharsTyped = getLocal("totalCharsTyped") || 0;
+    this.gameState = "welcome";
+    this.words = { english: [], filipino: [] };
+    this.currentLanguage = "english";
+    this.timerDuration = 30;
+    this.modeBPM = { easy: 60, medium: 90, hard: 120 };
+    this.currentMode = "medium";
+    this.keyPresses = [];
+    this.beatTimes = [];
+    this.correctChars = 0;
+    this.startTime = null;
 
-    this._initWeights();
     this._initEvents();
-    this._initBuffers();
-    this._initLines();
-    this.render();
+    this._loadWords();
   }
 
+  async _loadWords() {
+    try {
+      const [englishRes, filipinoRes] = await Promise.all([
+        fetch("assets/englishWords.txt"),
+        fetch("assets/filipinoWords.txt")
+      ]);
+      this.words.english = (await englishRes.text()).split("\n").filter(w => w);
+      this.words.filipino = (await filipinoRes.text()).split("\n").filter(w =>w);
+      this._initBuffers();
+      this.render();
+    } catch (error) {
+      console.error("Error loading word lists:", error);
+    }
+  }
 
   _initEvents() {
     this.dom.input.addEventListener("focus", () => {
@@ -39,10 +90,11 @@ class TypingPractice {
     });
 
     this._charsetRegExp = new RegExp(
-      `^[a-zA-Z0-9 ${escapeSpecialRegExpChars(PUNCTUATION)}]\$`
+      `^[a-zA-Z0-9 ${escapeSpecialRegExpChars(PUNCTUATION)}]$`
     );
 
     this.dom.input.addEventListener("keydown", (e) => {
+      if (this.gameState !== "playing") return;
       if (e.key === "Backspace") {
         this.backup();
       } else if (!e.ctrlKey && e.key.match(this._charsetRegExp)) {
@@ -53,155 +105,143 @@ class TypingPractice {
       e.preventDefault();
     });
 
-    this.dom.weights.querySelectorAll(":scope > div").forEach((div) => {
-      const getWeightKey = (child) => {
-        let elem = child;
-        while (elem.parentNode.className !== "weights") {
-          elem = elem.parentNode;
-        }
-        const key = elem.className;
-        if (!Object.getOwnPropertyNames(this.weights).includes(key)) {
-          throw Error(`Unknown user setting '${key}'.`);
-        }
-        return key;
-      };
-
-      div.addEventListener("wheel", (e) => {
-        const key = getWeightKey(e.target);
-        const v = this.weights[key] - Math.sign(e.deltaY);
-        if (v >= 0 && v <= 99) {
-          this.weights[key] = v;
-          this._saveWeights();
+    rootSelectorAll(".dropdown-content a").forEach(link => {
+      link.addEventListener("click", (e) => {
+        const parent = e.target.closest(".dropdown");
+        const btn = parent.querySelector(".dropbtn");
+        btn.textContent = e.target.textContent;
+        if (btn.textContent.toLowerCase().includes("english") || btn.textContent.toLowerCase().includes("filipino")) {
+          this.currentLanguage = e.target.textContent.toLowerCase();
           this._initBuffers();
           this.render();
+        } else {
+          this.timerDuration = parseInt(e.target.textContent);
         }
-        e.preventDefault();
       });
+    });
 
-      div.querySelector("button.incr").addEventListener("click", (e) => {
-        const key = getWeightKey(e.target);
-        const v = this.weights[key] + 1;
-        if (v <= 99) {
-          this.weights[key] = v;
-          this._saveWeights();
-          this._initBuffers();
-          this.render();
-        }
-      });
+    rootSelector("#gameMode").addEventListener("click", (e) => {
+      if (e.target.tagName === "A") {
+        this.currentMode = e.target.getAttribute("data-mode");
+        metronome.bpm = this.modeBPM[this.currentMode];
+      }
+    });
 
-      div.querySelector("button.decr").addEventListener("click", (e) => {
-        const key = getWeightKey(e.target);
-        const v = this.weights[key] - 1;
-        if (v >= 0) {
-          this.weights[key] = v;
-          this._saveWeights();
-          this._initBuffers();
-          this.render();
-        }
-      });
+    rootSelector("#startBtn").addEventListener("click", () => {
+      this.startGame();
+    });
+
+    rootSelector("#retryBtn").addEventListener("click", () => {
+      this.startGame();
     });
   }
 
   _initBuffers() {
+    if (!this.words[this.currentLanguage].length) return;
     const words = [];
     while (words.join(" ").length < this.bufferSize * 5) {
-      words.push(this._makeRandomWord());
+      words.push(randomChoice(this.words[this.currentLanguage]));
     }
     this.given = words.join(" ");
     this.typed = "";
   }
 
-  _initLines() {
-    const svg = this.dom.weights.querySelector(".lines");
-    const x1 = Math.round(svg.clientWidth / 2) - 0.5;
-    const y1 = -0.5;
-    const bg = "#fed";
-    const stroke = "#dfcfbf";
-    const strokeWidth = 2;
+  startGame() {
+    this.gameState = "playing";
+    this.startTime = performance.now();
+    this.keyPresses = [];
+    this.beatTimes = [];
+    this.correctChars = 0;
+    this._initBuffers();
+    metronome.start();
+    this.focus();
+    setTimeout(() => this.endGame(), this.timerDuration * 1000);
+  }
 
-    const makePath = (x1, y1, x2, y2) => {
-      const radius = 12;
-      const path = makeConnectingPath(x1, y1, x2, y2, radius);
-      path.setAttributeNS(null, "stroke", stroke);
-      path.setAttributeNS(null, "stroke-width", strokeWidth * 0.75);
-      path.setAttributeNS(null, "fill", "none");
-      return path;
-    };
+  endGame() {
+    this.gameState = "results";
+    metronome.stop();
+    this.calculateResults();
+    this.render();
+  }
 
-    const makePoint = (x, y) => {
-      const radius = 3;
-      const circle = makeSvgElement("circle");
-      circle.setAttributeNS(null, "cx", x);
-      circle.setAttributeNS(null, "cy", y);
-      circle.setAttributeNS(null, "stroke", stroke);
-      circle.setAttributeNS(null, "stroke-width", strokeWidth);
-      circle.setAttributeNS(null, "fill", bg);
-      circle.setAttributeNS(null, "r", radius);
-      return circle;
-    };
+  advance(key) {
+    const currentTime = performance.now();
+    const nearestBeat = this.beatTimes.reduce((prev, curr) =>
+      Math.abs(curr - currentTime) < Math.abs(prev - currentTime) ? curr : prev
+    );
+    const deviation = Math.abs(currentTime - nearestBeat);
 
-    this.dom.weights.querySelectorAll(":scope > div").forEach((d) => {
-      const x2 =
-        Math.round(d.offsetLeft + d.clientWidth / 2 + strokeWidth / 2) + 0.5;
-      const y2 = Math.round(d.offsetTop) + 0.5;
-      svg.append(makePath(x1, y1, x2, y2), makePoint(x2, y2));
+    this.keyPresses.push({
+      char: key,
+      time: currentTime,
+      deviation: deviation,
+      correct: key === this.given[this.typed.length]
     });
 
-    svg.append(makePoint(x1, y1));
+    if (key === this.given[this.typed.length]) {
+      this.correctChars++;
+    }
+
+    this.typed += key;
+    this.totalCharsTyped++;
+    this.render();
+
+    if (this.typed.length >= this.given.length) {
+      this._initBuffers();
+      this.typed = "";
+    }
   }
 
-  _makeCharset() {
-    const s = this.weights;
-    return (
-      LETTERS_LOWER.repeat(s.lettersLower) +
-      LETTERS_UPPER.repeat(s.lettersUpper) +
-      DIGITS.repeat(s.digits) +
-      PUNCTUATION.repeat(s.punctuation)
-    );
+  backup() {
+    if (this.typed.length > 0) {
+      this.typed = this.typed.slice(0, -1);
+      this.keyPresses.pop();
+      this.totalCharsTyped--;
+      this.render();
+    }
   }
 
-  _makeRandomWord() {
-    const length = Math.floor(Math.random() * this.maxWordLength + 1);
-    const charset = this._makeCharset();
-    return [...new Array(length)].map(() => randomChoice(charset)).join("");
+  calculateResults() {
+    const durationMinutes = this.timerDuration / 60;
+    const wpm = Math.round((this.correctChars / 5) / durationMinutes);
+    const accuracy = this.keyPresses.length
+      ? Math.round((this.correctChars / this.keyPresses.length) * 100)
+      : 0;
+    const avgDeviation = this.keyPresses.length
+      ? Math.round(
+          (this.keyPresses.reduce((sum, kp) => sum + kp.deviation, 0) /
+            this.keyPresses.length) * 100
+        ) / 100
+      : 0;
+
+    this.dom.wpm.textContent = wpm;
+    this.dom.accuracy.textContent = accuracy;
+    this.dom.beatDeviation.textContent = avgDeviation;
   }
 
   _resetCells() {
     const bs = this.bufferSize;
-
     const reset = (parent) => {
       const cells = parent.querySelectorAll("div");
       if (cells.length !== bs) {
-        // Clear the parent and create new cells.
-        cells.forEach((c) => c.remove());
+        cells.forEach(c => c.remove());
         parent.append(
           ...[...new Array(bs)].map(() => document.createElement("div"))
         );
       } else {
-        // Reset existing cells.
-        cells.forEach((c) => {
+        cells.forEach(c => {
           c.className = "";
           c.innerHTML = "";
         });
       }
     };
-
     reset(this.dom.given);
     reset(this.dom.typed);
   }
 
-  get totalCharsTyped() {
-    return this._totalCharsTyped || 0;
-  }
-
-  set totalCharsTyped(v) {
-    this._totalCharsTyped = v;
-    setLocal("totalCharsTyped", v);
-  }
-
-  _renderPractice() {
+  render() {
     this._resetCells();
-
     const bs = this.bufferSize;
     const mid = Math.floor(bs / 2);
     const d = this.typed.length - mid;
@@ -211,22 +251,16 @@ class TypingPractice {
     let cellsGiven = this.dom.given.querySelectorAll("div");
     let cellsTyped = this.dom.typed.querySelectorAll("div");
 
-    // Fill the cells.
     [...given].forEach((c, i) => (cellsGiven[i].innerHTML = c));
     [...typed].forEach((c, i) => (cellsTyped[i].innerHTML = c));
 
-    // Highlight the current top-row cell.
     cellsGiven[typed.length].classList.add("hl");
-
-    // Highlight and animate the current bottom-row cell.
-    if (this.focused) {
-      // Trick the browser into restarting the animation.
+    if (this.focused && this.gameState === "playing") {
       cellsTyped[typed.length].replaceWith(document.createElement("div"));
       cellsTyped = this.dom.typed.querySelectorAll("div");
       cellsTyped[typed.length].classList.add("hl", "animated");
     }
 
-    // Highlight errors.
     [...typed].forEach((c, i) => {
       if (given[i] !== c) {
         cellsGiven[i].classList.add("err");
@@ -235,6 +269,10 @@ class TypingPractice {
     });
 
     this.dom.count.innerHTML = this.totalCharsTyped;
+    rootSelector("#welcome").style.display =
+      this.gameState === "welcome" ? "block" : "none";
+    rootSelector("#results").style.display =
+      this.gameState === "results" ? "block" : "none";
   }
 
   focus() {
@@ -242,16 +280,10 @@ class TypingPractice {
     this.focused = true;
     this.render();
   }
-
-  blur() {
-    this.dom.input.blur();
-    this.focused = false;
-    this.render();
-  }
 }
 
 class Metronome {
-  constructor(root) {
+  constructor(root, practice) {
     this.dom = {
       root: root,
       text: root.querySelector("span"),
@@ -259,24 +291,25 @@ class Metronome {
       btnFaster: root.querySelector(".faster"),
       btnSlower: root.querySelector(".slower"),
     };
-
-    const bpm = getLocal("metronomeBPM");
-    this.bpm = typeof bpm === "undefined" ? 90 : bpm;
+    this.practice = practice;
+    this.bpm = getLocal("metronomeBPM") || 90;
     this._intervalID = null;
+    this._ac = null;
+    this._nextTickTime = 0;
     this._initEvents();
     this.render();
   }
 
   _initEvents() {
-    this.dom.root.addEventListener("wheel", (e) => {
-      if (this.ticking) {
-        this.bpm -= Math.sign(e.deltaY) * 5;
-        e.preventDefault();
+    this.dom.btnToggle.addEventListener("click", () => {
+      if (!this.ticking) {
+        this.practice.startGame();
+      } else {
+        this.practice.endGame();
       }
     });
-    this.dom.btnToggle.addEventListener("click", () => this.toggle());
-    this.dom.btnFaster.addEventListener("click", () => (this.bpm += 20));
-    this.dom.btnSlower.addEventListener("click", () => (this.bpm -= 20));
+    this.dom.btnFaster.addEventListener("click", () => (this.bpm += 30));
+    this.dom.btnSlower.addEventListener("click", () => (this.bpm -= 30));
   }
 
   get bpm() {
@@ -287,34 +320,31 @@ class Metronome {
     const v = parseInt(value);
     if (v >= 15 && v <= 600) {
       this._bpm = v;
-      this.render();
       setLocal("metronomeBPM", v);
+      this.render();
     }
-  }
-
-  _scheduleTick(time) {
-    const osc = this._ac.createOscillator();
-    const envelope = this._ac.createGain();
-
-    osc.frequency.value = 800;
-    envelope.gain.value = 1;
-    envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
-    envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
-    osc.connect(envelope);
-    envelope.connect(this._ac.destination);
-
-    osc.start(time);
-    osc.stop(time + 0.03);
   }
 
   get ticking() {
     return this._intervalID !== null;
   }
 
+  _scheduleTick(time) {
+    this.practice.beatTimes.push(time * 1000);
+    const osc = this._ac.createOscillator();
+    const envelope = this._ac.createGain();
+    osc.frequency.value = 800;
+    envelope.gain.value = 1;
+    envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
+    envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+    osc.connect(envelope);
+    envelope.connect(this._ac.destination);
+    osc.start(time);
+    osc.stop(time + 0.03);
+  }
+
   start() {
-    if (this.ticking) {
-      throw Error("Metronome is already running");
-    }
+    if (this.ticking) return;
     this._ac = new (window.AudioContext || window.webkitAudioContext)();
     this._nextTickTime = this._ac.currentTime + 60 / this.bpm;
     this._intervalID = setInterval(() => {
@@ -329,6 +359,7 @@ class Metronome {
   stop() {
     if (this.ticking) {
       clearInterval(this._intervalID);
+      this._ac.close();
       this._ac = null;
       this._nextTickTime = 0;
       this._intervalID = null;
@@ -346,61 +377,8 @@ class Metronome {
   }
 }
 
-//
-// BEGIN utils
-//
-
-function randomChoice(collection) {
-  const n = Math.floor(Math.random() * collection.length);
-  return collection[n];
-}
-
-function setLocal(key, value) {
-  return window.localStorage.setItem(key, JSON.stringify(value));
-}
-
-function getLocal(key) {
-  const item = window.localStorage.getItem(key);
-  return item === null ? undefined : JSON.parse(item);
-}
-
-function escapeSpecialRegExpChars(str) {
-  return str.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, "\\$&");
-}
-
-function makeSvgElement(tagName) {
-  return document.createElementNS("http://www.w3.org/2000/svg", tagName);
-}
-
-function makeConnectingPath(x1, y1, x2, y2, radius = 25) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const my = Math.round(dy / 2) + 0.5;
-  const sx = Math.sign(dx);
-  const sy = Math.sign(dy);
-  const maxRadius = Math.min(Math.abs(dx / 2), Math.abs(dy / 2));
-  const r = radius > maxRadius ? maxRadius : radius;
-  const b = 0.667;
-
-  const cmds = [
-    `M ${x1} ${y1}`,
-    `v ${my - sy * r}`,
-    `c 0 ${sy * r * b}, ${sx * r * (1 - b)} ${sy * r}, ${sx * r} ${sy * r}`,
-    `h ${dx - sx * r * 2}`,
-    `c ${sx * r * b} 0, ${sx * r} ${sy * r * (1 - b)}, ${sx * r} ${sy * r}`,
-    `v ${my - sy * r}`,
-  ];
-
-  const path = makeSvgElement("path");
-  path.setAttributeNS(null, "d", cmds.join(" "));
-  return path;
-}
-
-//
-// END utils
-//
-
-const metronome = new Metronome(document.getElementById("metronome"));
+// Initialize
 const practice = new TypingPractice(document.getElementById("practice"));
+const metronome = new Metronome(document.getElementById("metronome"), practice);
 
 practice.focus();
