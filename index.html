@@ -1,0 +1,142 @@
+<!DOCTYPE html">
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A simple typing game with metronome">
+  <title>Type with Beat</title>
+  <link rel="preload" as="font" href="assets/fonts/iosevka-regular.subset.woff2" type="font/woff2"
+    crossorigin="anonymous" />
+  <link rel="preload" as="font" href="assets/fonts/iosevka-bold.subset.woff2" type="font/woff2"
+    crossorigin="anonymous" />
+  <link rel="preload" as="font" href="assets/fonts/iosevka-italic.subset.woff2" type="font/woff2"
+    crossorigin="anonymous" />
+  <link rel="stylesheet" type="text/css" href="style.css" media="all" />
+  <link rel="shortcut icon" type="image/png" href="assets/favicon.png" />
+</head>
+
+<body>
+  <svg style="display: none">
+    <defs>
+      <symbol id="github-mark" viewBox="0 0 12 12">
+        <path
+          d="M6 .395a5.746 5.746 0 00-1.817 11.2c.288.052.393-.125.393-.277 0-.137-.005-.498-.008-.978-1.599.348-1.936-.77-1.936-.77-.261-.664-.638-.84-.638-.84-.522-.357.04-.35.04-.35.576.041.88.592.88.592.512.878 1.345.625 1.672.478.052-.371.2-.625.365-.768-1.276-.145-2.618-.639-2.618-2.84 0-.628.224-1.14.592-1.543-.06-.145-.256-.73.056-1.52 0 0 .483-.155 1.58.589.459-.128.95-.191 1.44-.194.487.003.979.066 1.438.194 1.097-.744 1.578-.59 1.578-.59.314.792.117 1.376.058 1.521.368.402.59.915.59 1.542 0 2.208-1.343 2.694-2.623 2.836.206.178.39.528.39 1.064 0 .768-.007 1.388-.007 1.577 0 .153.103.332.395.276A5.749 5.749 0 006 .395" />
+      </symbol>
+      <symbol id="plus" viewBox="0 0 11 11">
+        <path d="M0 4 h4 v-4 h3 v4 h4 v3 h-4 v4 h-3 v-4 h-4z" />
+      </symbol>
+      <symbol id="minus" viewBox="0 0 11 11">
+        <path d="M0 4 h11 v3 h-11z" />
+      </symbol>
+      <symbol id="play" viewBox="0 0 11 11">
+        <path d="M2 0 L11 5.5 L2 11Z" />
+      </symbol>
+      <symbol id="pause" viewBox="0 0 11 11">
+        <path d="M1 0 h3 v11 h-3z M7 0 h3 v11 h-3z" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <div id="github-link">
+    <a href="">
+      <svg>
+        <use xlink:href="#github-mark"></use>
+      </svg>
+    </a>
+  </div>
+
+  <div id="root">
+    <header>
+      <h1>Type<br />With Beat</h1>
+    </header>
+
+    <section id="welcome">
+      <h3>INSTRUCTIONS</h3>
+
+      <ol>
+        <li>Choose the level of difficulty (Easy, Medium, Hard)</li>
+        <li>Choose the timer (15s, 30s, 60s)</li>
+        <li>Pick a language</li>
+        <li>Once the game starts, type all the words you see on the screen, matching the beat sound.</li>
+        <li><strong><span class="space-out">DO YOUR BEST!</span></strong></li>
+      </ol>
+      <p>Aim for accuracy over speed. Adjust the weights below to emphasize areas you're struggling with. With regular
+        practice, typing structured text should become easier.
+    </section>
+
+    <section id="gameMode">
+      <div>
+        <strong>Legend:</strong> Choose the speed (easy = 60 BPM), (medium = 90 BPM), (hard = 120 BPM)
+      </div>
+    </section>
+
+
+    <section>
+      
+      <div class="dropdown">
+        <button class="dropbtn">Language</button>
+        <div class="dropdown-content">
+          <a href="#">Filipino</a>
+          <a href="#">English</a>
+        </div>
+      </div>
+      
+      <div class="dropdown">
+        <button class="dropbtn">Timer</button>
+        <div class="dropdown-content">
+          <a href="#">15s</a>
+          <a href="#">30s</a>
+          <a href="#">60s</a>
+        </div>
+
+        <div id="metronome" class="off">
+          <button class="toggle">
+            <svg class="play">
+              <use xlink:href="#play" />
+            </svg>
+            <svg class="pause">
+              <use xlink:href="#pause" />
+            </svg>
+          </button>
+          <span>metronome</span>
+          <button class="slower"><svg>
+              <use xlink:href="#minus" />
+            </svg></button>
+          <button class="faster"><svg>
+              <use xlink:href="#plus" />
+            </svg></button>
+        </div>
+      </div>
+    </section>
+    
+      <div id=" practice">
+            <section class="given"></section>
+            <section class="typed">
+              <input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            </section>
+
+            <p>You have typed <span class="count">0</span> characters so far.</p>
+        </div>
+
+        <section id="results">
+          <div id="wpm">
+            <p>WPM:<span>0</span></p>
+          </div>
+          <div id="accuracy">
+            <p>ACCURACY:<span></span>%</p>
+          </div>
+          <div id="beatDeviation">
+            <p>AVERAGE DEVIATION FROM BEAT:<span>0</span>%</p>
+          </div>
+        </section>
+
+  <footer>
+    <div>(c) 2025 <a href="">sakina</a></div>
+  </footer>
+  </div>
+
+  <script type="text/javascript" src="app.js"></script>
+</body>
+
+</html>
