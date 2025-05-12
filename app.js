@@ -46,8 +46,8 @@ class TypingPractice {
 
     this.bufferSize = 35;
     this.focused = false;
-    this.maxWordLength = 9;
-    this.totalCharsTyped = getLocal("totalCharsTyped") || 0;
+    this.maxWordLength = 10;
+    this.totalCharsTyped = 0;
     this.gameState = "welcome";
     this.words = { english: [], filipino: [] };
     this.currentLanguage = "english";
