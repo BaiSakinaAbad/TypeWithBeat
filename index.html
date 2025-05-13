@@ -10,8 +10,7 @@
   <link rel="preload" as="font" href="assets/fonts/iosevka-italic.subset.woff2" type="font/woff2" crossorigin="anonymous" />
   <link rel="stylesheet" type="text/css" href="style.css" media="all" />
   <link rel="shortcut icon" type="image/png" href="assets/favicon.png" />
-   <!--  CDN for chart js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <svg style="display: none">
@@ -60,51 +59,52 @@
     </section>
 
     <section id="controls">
-  <!-- Language dropdown -->
- <div class="dropdown">
-  <button class="dropbtn">Language</button>
-  <div class="dropdown-content">
-    <a href="#">🇺🇸 English</a>
-    <a href="#">🇵🇭 Filipino</a>
-    <a href="#">🇯🇵 Japanese</a>
-  </div>
-</div>
+      <!-- Language dropdown -->
+      <div class="dropdown">
+        <button class="dropbtn">Language</button>
+        <div class="dropdown-content">
+          <a href="#">🇺🇸 English</a>
+          <a href="#">🇵🇭 Filipino</a>
+          <a href="#">🇯🇵 Japanese</a>
+        </div>
+      </div>
 
-  <!-- Timer dropdown -->
-  <div class="dropdown">
-    <button class="dropbtn">Timer</button>
-    <div class="dropdown-content">
-      <a href="#">15s</a>
-      <a href="#">30s</a>
-      <a href="#">60s</a>
-    </div>
-  </div>
+      <!-- Timer dropdown -->
+      <div class="dropdown">
+        <button class="dropbtn">Timer</button>
+        <div class="dropdown-content">
+          <a href="#">15s</a>
+          <a href="#">30s</a>
+          <a href="#">60s</a>
+        </div>
+      </div>
 
-  <!-- Difficulty dropdown -->
-  <div class="dropdown">
-    <button class="dropbtn">Difficulty</button>
-    <div class="dropdown-content" id="difficultyOptions">
-      <a href="#" data-mode="easy">Easy (120 BPM)</a>
-      <a href="#" data-mode="medium">Medium (150 BPM)</a>
-      <a href="#" data-mode="hard">Hard (180 BPM)</a>
-    </div>
-  </div>
+      <!-- Difficulty dropdown -->
+      <div class="dropdown">
+        <button class="dropbtn">Difficulty</button>
+        <div class="dropdown-content" id="difficultyOptions">
+          <a href="#" data-mode="easy">Easy (120 BPM)</a>
+          <a href="#" data-mode="medium">Medium (150 BPM)</a>
+          <a href="#" data-mode="hard">Hard (180 BPM)</a>
+        </div>
+      </div>
 
-  <!-- Metronome -->
-  <div id="metronome" class="off">
-    <button class="toggle">
-      <svg class="play"><use xlink:href="#play" /></svg>
-      <svg class="pause"><use xlink:href="#pause" /></svg>
-    </button>
-    <span>metronome</span>
-    <button class="slower"><svg><use xlink:href="#minus" /></svg></button>
-    <button class="faster"><svg><use xlink:href="#plus" /></svg></button>
-  </div>
-</section>
-
+      <!-- Metronome -->
+      <div id="metronome" class="off">
+        <button class="toggle">
+          <svg class="play"><use xlink:href="#play" /></svg>
+          <svg class="pause"><use xlink:href="#pause" /></svg>
+        </button>
+        <span>metronome</span>
+        <button class="slower"><svg><use xlink:href="#minus" /></svg></button>
+        <button class="faster"><svg><use xlink:href="#plus" /></svg></button>
+      </div>
+    </section>
 
     <section id="practice">
-      <button id="startBtn">Start</button>
+      <div class="button-container">
+        <button id="startBtn">Start</button>
+      </div>
       <div id="timer">
         <p>Time Left: <span>0</span></p>
       </div>
@@ -117,17 +117,26 @@
 
     <section id="results" style="display: none;">
       <h3>Results</h3>
-      <div id="wpm">
-        <p>Words Per Minute: <span>0</span></p>
+      <div class="charts">
+        <div class="chart-container">
+          <h4>Words Per Minute</h4>
+          <canvas id="wpmChart"></canvas>
+          <p>WPM: <span id="wpmValue">0</span></p>
+        </div>
+        <div class="chart-container">
+          <h4>Accuracy</h4>
+          <canvas id="accuracyChart"></canvas>
+          <p>Accuracy: <span id="accuracyValue">0</span>%</p>
+        </div>
+        <div class="chart-container">
+          <h4>Average Beat Deviation</h4>
+          <canvas id="beatDeviationChart"></canvas>
+          <p>Deviation: <span id="beatDeviationValue">0</span>ms</p>
+        </div>
       </div>
-      <div id="accuracy">
-        <p>Accuracy: <span>0</span>%</p>
+      <div class="button-container">
+        <button id="retryBtn">Retry</button>
       </div>
-      <div id="beatDeviation">
-        <p>Average Beat Deviation: <span>0</span>ms</p>
-      </div>
-      <button id="retryBtn">Retry</button>
-
     </section>
 
     <footer>

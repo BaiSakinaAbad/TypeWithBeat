@@ -39,10 +39,13 @@ class TypingPractice {
       typed: root.querySelector(".typed"),
       input: root.querySelector("input"),
       count: root.querySelector(".count"),
-      wpm: document.querySelector("#wpm span"),
-      accuracy: document.querySelector("#accuracy span"),
-      beatDeviation: document.querySelector("#beatDeviation span"),
+      wpm: document.querySelector("#wpmValue"),
+      accuracy: document.querySelector("#accuracyValue"),
+      beatDeviation: document.querySelector("#beatDeviationValue"),
       timer: root.querySelector("#timer span"),
+      wpmChart: document.querySelector("#wpmChart"),
+      accuracyChart: document.querySelector("#accuracyChart"),
+      beatDeviationChart: document.querySelector("#beatDeviationChart"),
     };
 
     this.bufferSize = 35;
@@ -60,6 +63,7 @@ class TypingPractice {
     this.correctChars = 0;
     this.startTime = null;
     this._timerInterval = null;
+    this.charts = {};
 
     this._initEvents();
     this._loadWords();
@@ -67,15 +71,15 @@ class TypingPractice {
 
   async _loadWords() {
     try {
-    const [englishRes, filipinoRes, japaneseRes] = await Promise.all([
-  fetch("assets/englishWords.txt"),
-  fetch("assets/filipinoWords.txt"),
-  fetch("assets/japaneseWords.txt")
-]);
+      const [englishRes, filipinoRes, japaneseRes] = await Promise.all([
+        fetch("assets/englishWords.txt"),
+        fetch("assets/filipinoWords.txt"),
+        fetch("assets/japaneseWords.txt")
+      ]);
 
-this.words.english = (await englishRes.text()).split("\n").filter(w => w);
-this.words.filipino = (await filipinoRes.text()).split("\n").filter(w => w);
-this.words.japanese = (await japaneseRes.text()).split("\n").filter(w => w);
+      this.words.english = (await englishRes.text()).split("\n").filter(w => w);
+      this.words.filipino = (await filipinoRes.text()).split("\n").filter(w => w);
+      this.words.japanese = (await japaneseRes.text()).split("\n").filter(w => w);
 
       this._initBuffers();
       this.render();
@@ -117,8 +121,7 @@ this.words.japanese = (await japaneseRes.text()).split("\n").filter(w => w);
         const btn = parent.querySelector(".dropbtn");
         btn.textContent = e.target.textContent;
         const rawText = e.target.textContent.trim();
-        const text = rawText.replace(/^[^\w]+/, "").toLowerCase(); // remove flag emoji
-
+        const text = rawText.replace(/^[^\w]+/, "").toLowerCase();
 
         if (["english", "filipino", "japanese"].includes(text)) {
           this.currentLanguage = text;
@@ -130,23 +133,20 @@ this.words.japanese = (await japaneseRes.text()).split("\n").filter(w => w);
             this.timerDuration = num;
           }
         }
-
       });
     });
 
-   // Difficulty dropdown
-rootSelectorAll("#difficultyOptions a").forEach(link => {
-  link.addEventListener("click", (e) => {
-    e.preventDefault();
-    const mode = e.target.getAttribute("data-mode");
-    this.currentMode = mode;
-    metronome.bpm = this.modeBPM[mode];
+    rootSelectorAll("#difficultyOptions a").forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const mode = e.target.getAttribute("data-mode");
+        this.currentMode = mode;
+        metronome.bpm = this.modeBPM[mode];
 
-    // Update dropdown button label
-    const dropdownBtn = e.target.closest(".dropdown").querySelector(".dropbtn");
-    dropdownBtn.textContent = e.target.textContent;
-  });
-});
+        const dropdownBtn = e.target.closest(".dropdown").querySelector(".dropbtn");
+        dropdownBtn.textContent = e.target.textContent;
+      });
+    });
 
     rootSelector("#startBtn").addEventListener("click", () => {
       this.startGame();
@@ -163,8 +163,8 @@ rootSelectorAll("#difficultyOptions a").forEach(link => {
     while (words.join(" ").length < this.bufferSize * 5) {
       words.push(randomChoice(this.words[this.currentLanguage]));
     }
-    this.given = words.join(" ").replace(/\s+/g, " ").trim(); // ✅ clean spaces
-  this.typed = "";
+    this.given = words.join(" ").replace(/\s+/g, " ").trim();
+    this.typed = "";
   }
 
   startCountdown() {
@@ -199,6 +199,7 @@ rootSelectorAll("#difficultyOptions a").forEach(link => {
     if (this._timerInterval) clearInterval(this._timerInterval);
     this.calculateResults();
     this.render();
+    this.renderCharts();
   }
 
   advance(key) {
@@ -254,6 +255,76 @@ rootSelectorAll("#difficultyOptions a").forEach(link => {
     this.dom.wpm.textContent = wpm;
     this.dom.accuracy.textContent = accuracy;
     this.dom.beatDeviation.textContent = avgDeviation;
+
+    return { wpm, accuracy, avgDeviation };
+  }
+
+  renderCharts() {
+    const { wpm, accuracy, avgDeviation } = this.calculateResults();
+
+    // Destroy existing charts if they exist
+    Object.values(this.charts).forEach(chart => chart.destroy());
+
+    // WPM Chart (max 100)
+    this.charts.wpm = new Chart(this.dom.wpmChart, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [wpm, Math.max(0, 100 - wpm)],
+          backgroundColor: ['#4CAF50', '#E0E0E0'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        maintainAspectRatio: false
+      }
+    });
+
+    // Accuracy Chart (max 100)
+    this.charts.accuracy = new Chart(this.dom.accuracyChart, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [accuracy, Math.max(0, 100 - accuracy)],
+          backgroundColor: ['#2196F3', '#E0E0E0'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        maintainAspectRatio: false
+      }
+    });
+
+    // Beat Deviation Chart (max 500ms, lower is better)
+    const deviationScore = Math.max(0, 500 - avgDeviation);
+    this.charts.beatDeviation = new Chart(this.dom.beatDeviationChart, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [deviationScore, Math.max(0, 500 - deviationScore)],
+          backgroundColor: ['#FF9800', '#E0E0E0'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        maintainAspectRatio: false
+      }
+    });
   }
 
   _resetCells() {
@@ -359,7 +430,7 @@ class Metronome {
   }
 
   set bpm(value) {
-    const v = Math.min(Math.max(parseInt(value), 120), 180); //  between 120–150
+    const v = Math.min(Math.max(parseInt(value), 120), 180);
     this._bpm = v;
     setLocal("metronomeBPM", v);
     this.render();
