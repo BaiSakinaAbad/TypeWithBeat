@@ -153,7 +153,7 @@ class TypingPractice {
     });
 
     rootSelector("#retryBtn").addEventListener("click", () => {
-      this.startGame();
+      this.resetGame();
     });
   }
 
@@ -180,12 +180,24 @@ class TypingPractice {
     }, 1000);
   }
 
+  resetGame() {
+    this.gameState = "welcome";
+    this.keyPresses = [];
+    this.beatTimes = [];
+    this.correctChars = 0;
+    this.totalCharsTyped = 0;
+    this.startTime = null;
+    this._initBuffers();
+    this.render();
+  }
+
   startGame() {
     this.gameState = "playing";
     this.startTime = performance.now();
     this.keyPresses = [];
     this.beatTimes = [];
     this.correctChars = 0;
+    this.totalCharsTyped = 0;
     this._initBuffers();
     metronome.start();
     this.focus();
