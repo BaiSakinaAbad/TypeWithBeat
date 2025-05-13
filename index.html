@@ -48,21 +48,22 @@
     <section id="welcome">
       <h3>Instructions</h3>
       <ol>
-        <li>Select a difficulty mode (Easy: 60 BPM, Medium: 90 BPM, Hard: 120 BPM)</li>
+        <li>Select a difficulty mode (Easy: 90 BPM, Medium: 120 BPM, Hard: 150 BPM)</li>
         <li>Choose a timer duration (15s, 30s, 60s)</li>
         <li>Select a language (English or Filipino)</li>
         <li>Click Start or toggle the metronome to begin typing words in sync with the beat</li>
         <li>Type accurately and match the beat for best results!</li>
       </ol>
-      <p>Practice regularly to improve your typing speed, accuracy, and rhythm. Word lists are loaded from <code>typing-practice/assets/englishWords.txt</code> and <code>typing-practice/assets/filipinoWords.txt</code>.</p>
+      <p>Practice regularly to improve your typing speed, accuracy, and rhythm.</p>
     </section>
 
     <section id="gameMode">
       <h3>Difficulty Mode</h3>
       <div>
-        <a href="#" class="mode" data-mode="easy">Easy (60 BPM)</a>
-        <a href="#" class="mode" data-mode="medium">Medium (90 BPM)</a>
-        <a href="#" class="mode" data-mode="hard">Hard (120 BPM)</a>
+       <a href="#" class="mode" data-mode="easy">Easy (90 BPM)</a>
+        <a href="#" class="mode" data-mode="medium">Medium (120 BPM)</a>
+        <a href="#" class="mode" data-mode="hard">Hard (150 BPM)</a>
+        
       </div>
     </section>
 
@@ -104,12 +105,15 @@
     </section>
 
     <section id="practice">
+      <button id="startBtn">Start</button>
+      <div id="timer">
+        <p>Time Left: <span>0</span></p>
+      </div>
       <section class="given"></section>
       <section class="typed">
         <input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
       </section>
       <p>Characters typed: <span class="count">0</span></p>
-      <button id="startBtn">Start</button>
     </section>
 
     <section id="results" style="display: none;">
@@ -124,6 +128,7 @@
         <p>Average Beat Deviation: <span>0</span>ms</p>
       </div>
       <button id="retryBtn">Retry</button>
+
     </section>
 
     <footer>

@@ -42,6 +42,7 @@ class TypingPractice {
       wpm: document.querySelector("#wpm span"),
       accuracy: document.querySelector("#accuracy span"),
       beatDeviation: document.querySelector("#beatDeviation span"),
+      timer: root.querySelector("#timer span"),
     };
 
     this.bufferSize = 35;
@@ -52,12 +53,13 @@ class TypingPractice {
     this.words = { english: [], filipino: [] };
     this.currentLanguage = "english";
     this.timerDuration = 30;
-    this.modeBPM = { easy: 60, medium: 90, hard: 120 };
+    this.modeBPM = { easy: 90, medium: 120, hard: 150 };
     this.currentMode = "medium";
     this.keyPresses = [];
     this.beatTimes = [];
     this.correctChars = 0;
     this.startTime = null;
+    this._timerInterval = null;
 
     this._initEvents();
     this._loadWords();
@@ -70,7 +72,7 @@ class TypingPractice {
         fetch("assets/filipinoWords.txt")
       ]);
       this.words.english = (await englishRes.text()).split("\n").filter(w => w);
-      this.words.filipino = (await filipinoRes.text()).split("\n").filter(w =>w);
+      this.words.filipino = (await filipinoRes.text()).split("\n").filter(w => w);
       this._initBuffers();
       this.render();
     } catch (error) {
@@ -142,8 +144,21 @@ class TypingPractice {
     while (words.join(" ").length < this.bufferSize * 5) {
       words.push(randomChoice(this.words[this.currentLanguage]));
     }
-    this.given = words.join(" ");
-    this.typed = "";
+    this.given = words.join(" ").replace(/\s+/g, " ").trim(); // ✅ clean spaces
+  this.typed = "";
+  }
+
+  startCountdown() {
+    let remaining = this.timerDuration;
+    this.dom.timer.textContent = remaining;
+
+    this._timerInterval = setInterval(() => {
+      remaining--;
+      this.dom.timer.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(this._timerInterval);
+      }
+    }, 1000);
   }
 
   startGame() {
@@ -155,12 +170,14 @@ class TypingPractice {
     this._initBuffers();
     metronome.start();
     this.focus();
+    this.startCountdown();
     setTimeout(() => this.endGame(), this.timerDuration * 1000);
   }
 
   endGame() {
     this.gameState = "results";
     metronome.stop();
+    if (this._timerInterval) clearInterval(this._timerInterval);
     this.calculateResults();
     this.render();
   }
@@ -268,7 +285,7 @@ class TypingPractice {
       }
     });
 
-    this.dom.count.innerHTML = this.totalCharsTyped;
+    this.dom.count.textContent = this.totalCharsTyped;
     rootSelector("#welcome").style.display =
       this.gameState === "welcome" ? "block" : "none";
     rootSelector("#results").style.display =
@@ -308,8 +325,14 @@ class Metronome {
         this.practice.endGame();
       }
     });
-    this.dom.btnFaster.addEventListener("click", () => (this.bpm += 30));
-    this.dom.btnSlower.addEventListener("click", () => (this.bpm -= 30));
+
+    this.dom.btnFaster.addEventListener("click", () => {
+      this.bpm = this._bpm + 30;
+    });
+
+    this.dom.btnSlower.addEventListener("click", () => {
+      this.bpm = this._bpm - 30;
+    });
   }
 
   get bpm() {
@@ -317,12 +340,10 @@ class Metronome {
   }
 
   set bpm(value) {
-    const v = parseInt(value);
-    if (v >= 15 && v <= 600) {
-      this._bpm = v;
-      setLocal("metronomeBPM", v);
-      this.render();
-    }
+    const v = Math.min(Math.max(parseInt(value), 90), 150); //  between 90–150
+    this._bpm = v;
+    setLocal("metronomeBPM", v);
+    this.render();
   }
 
   get ticking() {
