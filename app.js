@@ -50,10 +50,10 @@ class TypingPractice {
     this.maxWordLength = 10;
     this.totalCharsTyped = 0;
     this.gameState = "welcome";
-    this.words = { english: [], filipino: [] };
+    this.words = { english: [], filipino: [], japanese: [] };
     this.currentLanguage = "english";
     this.timerDuration = 30;
-    this.modeBPM = { easy: 90, medium: 120, hard: 150 };
+    this.modeBPM = { easy: 120, medium: 150, hard: 180 };
     this.currentMode = "medium";
     this.keyPresses = [];
     this.beatTimes = [];
@@ -67,12 +67,16 @@ class TypingPractice {
 
   async _loadWords() {
     try {
-      const [englishRes, filipinoRes] = await Promise.all([
-        fetch("assets/englishWords.txt"),
-        fetch("assets/filipinoWords.txt")
-      ]);
-      this.words.english = (await englishRes.text()).split("\n").filter(w => w);
-      this.words.filipino = (await filipinoRes.text()).split("\n").filter(w => w);
+    const [englishRes, filipinoRes, japaneseRes] = await Promise.all([
+  fetch("assets/englishWords.txt"),
+  fetch("assets/filipinoWords.txt"),
+  fetch("assets/japaneseWords.txt")
+]);
+
+this.words.english = (await englishRes.text()).split("\n").filter(w => w);
+this.words.filipino = (await filipinoRes.text()).split("\n").filter(w => w);
+this.words.japanese = (await japaneseRes.text()).split("\n").filter(w => w);
+
       this._initBuffers();
       this.render();
     } catch (error) {
@@ -112,22 +116,37 @@ class TypingPractice {
         const parent = e.target.closest(".dropdown");
         const btn = parent.querySelector(".dropbtn");
         btn.textContent = e.target.textContent;
-        if (btn.textContent.toLowerCase().includes("english") || btn.textContent.toLowerCase().includes("filipino")) {
-          this.currentLanguage = e.target.textContent.toLowerCase();
+        const rawText = e.target.textContent.trim();
+        const text = rawText.replace(/^[^\w]+/, "").toLowerCase(); // remove flag emoji
+
+
+        if (["english", "filipino", "japanese"].includes(text)) {
+          this.currentLanguage = text;
           this._initBuffers();
           this.render();
-        } else {
-          this.timerDuration = parseInt(e.target.textContent);
+        } else if (/^\d+(s)?$/.test(text)) {
+          const num = parseInt(text);
+          if (!isNaN(num)) {
+            this.timerDuration = num;
+          }
         }
+
       });
     });
 
-    rootSelector("#gameMode").addEventListener("click", (e) => {
-      if (e.target.tagName === "A") {
-        this.currentMode = e.target.getAttribute("data-mode");
-        metronome.bpm = this.modeBPM[this.currentMode];
-      }
-    });
+   // Difficulty dropdown
+rootSelectorAll("#difficultyOptions a").forEach(link => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    const mode = e.target.getAttribute("data-mode");
+    this.currentMode = mode;
+    metronome.bpm = this.modeBPM[mode];
+
+    // Update dropdown button label
+    const dropdownBtn = e.target.closest(".dropdown").querySelector(".dropbtn");
+    dropdownBtn.textContent = e.target.textContent;
+  });
+});
 
     rootSelector("#startBtn").addEventListener("click", () => {
       this.startGame();
@@ -340,7 +359,7 @@ class Metronome {
   }
 
   set bpm(value) {
-    const v = Math.min(Math.max(parseInt(value), 90), 150); //  between 90–150
+    const v = Math.min(Math.max(parseInt(value), 120), 180); //  between 120–150
     this._bpm = v;
     setLocal("metronomeBPM", v);
     this.render();

@@ -10,6 +10,8 @@
   <link rel="preload" as="font" href="assets/fonts/iosevka-italic.subset.woff2" type="font/woff2" crossorigin="anonymous" />
   <link rel="stylesheet" type="text/css" href="style.css" media="all" />
   <link rel="shortcut icon" type="image/png" href="assets/favicon.png" />
+   <!--  CDN for chart js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <svg style="display: none">
@@ -48,61 +50,58 @@
     <section id="welcome">
       <h3>Instructions</h3>
       <ol>
-        <li>Select a difficulty mode (Easy: 90 BPM, Medium: 120 BPM, Hard: 150 BPM)</li>
+        <li>Select a difficulty mode (Easy: 120 BPM, Medium: 150 BPM, Hard: 180 BPM)</li>
         <li>Choose a timer duration (15s, 30s, 60s)</li>
-        <li>Select a language (English or Filipino)</li>
+        <li>Select a language (English, Filipino or Japanese (Romanize))</li>
         <li>Click Start or toggle the metronome to begin typing words in sync with the beat</li>
         <li>Type accurately and match the beat for best results!</li>
       </ol>
       <p>Practice regularly to improve your typing speed, accuracy, and rhythm.</p>
     </section>
 
-    <section id="gameMode">
-      <h3>Difficulty Mode</h3>
-      <div>
-       <a href="#" class="mode" data-mode="easy">Easy (90 BPM)</a>
-        <a href="#" class="mode" data-mode="medium">Medium (120 BPM)</a>
-        <a href="#" class="mode" data-mode="hard">Hard (150 BPM)</a>
-        
-      </div>
-    </section>
-
     <section id="controls">
-      <div class="dropdown">
-        <button class="dropbtn">Language</button>
-        <div class="dropdown-content">
-          <a href="#">English</a>
-          <a href="#">Filipino</a>
-        </div>
-      </div>
+  <!-- Language dropdown -->
+ <div class="dropdown">
+  <button class="dropbtn">Language</button>
+  <div class="dropdown-content">
+    <a href="#">🇺🇸 English</a>
+    <a href="#">🇵🇭 Filipino</a>
+    <a href="#">🇯🇵 Japanese</a>
+  </div>
+</div>
 
-      <div class="dropdown">
-        <button class="dropbtn">Timer</button>
-        <div class="dropdown-content">
-          <a href="#">15s</a>
-          <a href="#">30s</a>
-          <a href="#">60s</a>
-        </div>
-      </div>
+  <!-- Timer dropdown -->
+  <div class="dropdown">
+    <button class="dropbtn">Timer</button>
+    <div class="dropdown-content">
+      <a href="#">15s</a>
+      <a href="#">30s</a>
+      <a href="#">60s</a>
+    </div>
+  </div>
 
-      <div id="metronome" class="off">
-        <button class="toggle">
-          <svg class="play">
-            <use xlink:href="#play" />
-          </svg>
-          <svg class="pause">
-            <use xlink:href="#pause" />
-          </svg>
-        </button>
-        <span>metronome</span>
-        <button class="slower"><svg>
-            <use xlink:href="#minus" />
-          </svg></button>
-        <button class="faster"><svg>
-            <use xlink:href="#plus" />
-          </svg></button>
-      </div>
-    </section>
+  <!-- Difficulty dropdown -->
+  <div class="dropdown">
+    <button class="dropbtn">Difficulty</button>
+    <div class="dropdown-content" id="difficultyOptions">
+      <a href="#" data-mode="easy">Easy (120 BPM)</a>
+      <a href="#" data-mode="medium">Medium (150 BPM)</a>
+      <a href="#" data-mode="hard">Hard (180 BPM)</a>
+    </div>
+  </div>
+
+  <!-- Metronome -->
+  <div id="metronome" class="off">
+    <button class="toggle">
+      <svg class="play"><use xlink:href="#play" /></svg>
+      <svg class="pause"><use xlink:href="#pause" /></svg>
+    </button>
+    <span>metronome</span>
+    <button class="slower"><svg><use xlink:href="#minus" /></svg></button>
+    <button class="faster"><svg><use xlink:href="#plus" /></svg></button>
+  </div>
+</section>
+
 
     <section id="practice">
       <button id="startBtn">Start</button>
