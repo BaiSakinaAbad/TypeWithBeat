@@ -46,6 +46,7 @@ class TypingPractice {
       wpmChart: document.querySelector("#wpmChart"),
       accuracyChart: document.querySelector("#accuracyChart"),
       beatDeviationChart: document.querySelector("#beatDeviationChart"),
+      beatFeedback: root.querySelector("#beatFeedback"),
     };
 
     this.bufferSize = 35;
@@ -56,7 +57,7 @@ class TypingPractice {
     this.words = { english: [], filipino: [], japanese: [] };
     this.currentLanguage = "english";
     this.timerDuration = 30;
-    this.modeBPM = { easy: 120, medium: 150, hard: 180 };
+    this.modeBPM = { easy: 150, medium: 180, hard: 210 };
     this.currentMode = "medium";
     this.keyPresses = [];
     this.beatTimes = [];
@@ -187,6 +188,7 @@ class TypingPractice {
     this.correctChars = 0;
     this.totalCharsTyped = 0;
     this.startTime = null;
+    this.dom.beatFeedback.textContent = ""; // Clear beat feedback
     this._initBuffers();
     this.render();
   }
@@ -198,6 +200,7 @@ class TypingPractice {
     this.beatTimes = [];
     this.correctChars = 0;
     this.totalCharsTyped = 0;
+    this.dom.beatFeedback.textContent = ""; // Clear beat feedback
     this._initBuffers();
     metronome.start();
     this.focus();
@@ -209,15 +212,25 @@ class TypingPractice {
     this.gameState = "results";
     metronome.stop();
     if (this._timerInterval) clearInterval(this._timerInterval);
+    this.dom.beatFeedback.textContent = ""; // Clear beat feedback
     this.calculateResults();
     this.render();
     this.renderCharts();
   }
 
+  getBeatSyncFeedback(deviation) {
+    if (this.beatTimes.length === 0) return "";
+    if (deviation <= 50) return "Perfect!";
+    if (deviation <= 100) return "Good";
+    if (deviation <= 200) return "Slow";
+    return "Bad";
+  }
+
   advance(key) {
     const currentTime = performance.now();
     const nearestBeat = this.beatTimes.reduce((prev, curr) =>
-      Math.abs(curr - currentTime) < Math.abs(prev - currentTime) ? curr : prev
+      Math.abs(curr - currentTime) < Math.abs(prev - currentTime) ? curr : prev,
+      this.beatTimes[0]
     );
     const deviation = Math.abs(currentTime - nearestBeat);
 
@@ -227,6 +240,10 @@ class TypingPractice {
       deviation: deviation,
       correct: key === this.given[this.typed.length]
     });
+
+    // Update live beat sync feedback
+    const feedback = this.getBeatSyncFeedback(deviation);
+    this.dom.beatFeedback.textContent = feedback;
 
     if (key === this.given[this.typed.length]) {
       this.correctChars++;
@@ -277,6 +294,28 @@ class TypingPractice {
     // Destroy existing charts if they exist
     Object.values(this.charts).forEach(chart => chart.destroy());
 
+    // Plugin to draw text in the center of the doughnut chart
+    const centerTextPlugin = {
+      id: 'centerText',
+      afterDraw(chart) {
+        const { ctx, chartArea: { width, height } } = chart;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 20px sans-serif';
+
+        // Get the value to display from the chart's metadata
+        const value = chart.config.options.plugins.centerText.value;
+        ctx.fillStyle = chart.data.datasets[0].backgroundColor[0]; // Use the chart's primary color
+        ctx.fillText(value, centerX, centerY);
+
+        ctx.restore();
+      }
+    };
+
     // WPM Chart (max 100)
     this.charts.wpm = new Chart(this.dom.wpmChart, {
       type: 'doughnut',
@@ -291,10 +330,14 @@ class TypingPractice {
         cutout: '70%',
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: false }
+          tooltip: { enabled: false },
+          centerText: {
+            value: `${wpm}`
+          }
         },
         maintainAspectRatio: false
-      }
+      },
+      plugins: [centerTextPlugin]
     });
 
     // Accuracy Chart (max 100)
@@ -311,10 +354,14 @@ class TypingPractice {
         cutout: '70%',
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: false }
+          tooltip: { enabled: false },
+          centerText: {
+            value: `${accuracy}%`
+          }
         },
         maintainAspectRatio: false
-      }
+      },
+      plugins: [centerTextPlugin]
     });
 
     // Beat Deviation Chart (max 500ms, lower is better)
@@ -332,10 +379,14 @@ class TypingPractice {
         cutout: '70%',
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: false }
+          tooltip: { enabled: false },
+          centerText: {
+            value: `${avgDeviation}ms`
+          }
         },
         maintainAspectRatio: false
-      }
+      },
+      plugins: [centerTextPlugin]
     });
   }
 
@@ -442,7 +493,7 @@ class Metronome {
   }
 
   set bpm(value) {
-    const v = Math.min(Math.max(parseInt(value), 120), 180);
+    const v = Math.min(Math.max(parseInt(value), 150), 300);
     this._bpm = v;
     setLocal("metronomeBPM", v);
     this.render();

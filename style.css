@@ -448,3 +448,11 @@ margin-top: 50px;
   outline: none;
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
 }
+
+.beat-feedback {
+  font-style: italic;
+  color: #824e00;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  min-height: 1.5rem;
+}

@@ -49,7 +49,7 @@
     <section id="welcome">
       <h3>Instructions</h3>
       <ol>
-        <li>Select a difficulty mode (Easy: 120 BPM, Medium: 150 BPM, Hard: 180 BPM)</li>
+        <li>Select a difficulty mode (Easy: 150 BPM, Medium: 180 BPM, Hard: 210 BPM)</li>
         <li>Choose a timer duration (15s, 30s, 60s)</li>
         <li>Select a language (English, Filipino or Japanese (Romanize))</li>
         <li>Click Start or toggle the metronome to begin typing words in sync with the beat</li>
@@ -83,9 +83,9 @@
       <div class="dropdown">
         <button class="dropbtn">Difficulty</button>
         <div class="dropdown-content" id="difficultyOptions">
-          <a href="#" data-mode="easy">Easy (120 BPM)</a>
-          <a href="#" data-mode="medium">Medium (150 BPM)</a>
-          <a href="#" data-mode="hard">Hard (180 BPM)</a>
+          <a href="#" data-mode="easy">Easy (150 BPM)</a>
+          <a href="#" data-mode="medium">Medium (160 BPM)</a>
+          <a href="#" data-mode="hard">Hard (210 BPM)</a>
         </div>
       </div>
 
@@ -112,6 +112,7 @@
       <section class="typed">
         <input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
       </section>
+      <p id="beatFeedback" class="beat-feedback"></p>
       <p>Characters typed: <span class="count">0</span></p>
     </section>
 
