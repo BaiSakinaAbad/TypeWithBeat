@@ -5,6 +5,23 @@
   border: 0;
 }
 
+:root {
+  --background-overlay: #333333CC; /* More opaque dark gray for readability */
+  --text-primary: #E0E0E0; /* Light gray for primary text */
+  --text-secondary: #B0B0B0; /* Slightly darker gray for secondary text */
+  --button-bg: #4682B4; /* Steel blue for buttons */
+  --button-hover-bg: #A9C5D9; /* Lighter blue for hover states */
+  --button-border: #2F4F7F; /* Darker blue for button borders */
+  --element-bg: #4A4A4A; /* Dark gray for element backgrounds */
+  --element-border: #555555; /* Slightly lighter gray for borders */
+  --highlight-bg: #5A7D9A; /* Muted blue for highlights */
+  --error-bg: #FF666680; /* Muted red for errors with transparency */
+  --chart-wpm: #66BB6A; /* Green for WPM chart */
+  --chart-accuracy: #42A5F5; /* Blue for accuracy chart */
+  --neutral-gray: #E0E0E0; /* Neutral gray for charts when no data */
+  --wpm-green: #4ad951;
+}
+
 @font-face {
   font-family: "Iosevka";
   font-display: block;
@@ -38,7 +55,8 @@
 html {
   font-family: "Iosevka", monospace;
   font-size: 15px;
-  background: #fed;
+  background: var(--background-overlay);
+  color: var(--text-primary);
 }
 
 body {
@@ -50,12 +68,24 @@ body {
   overflow-x: hidden;
 }
 
+#background-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures the video covers the entire viewport */
+  z-index: -1; /* Places the video behind all other content */
+}
+
 #root {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 90ch;
+  max-width: 100ch;
   padding: 3rem 1rem;
+  background: var(--background-overlay); /* More opaque overlay for readability */
+  border-radius: 1rem;
 }
 
 #root > * + * {
@@ -78,7 +108,7 @@ body {
   justify-content: flex-end;
   align-items: center;
   text-align: center;
-  opacity: 0.3;
+  opacity: 0.7;
   padding: 2rem 0;
 }
 
@@ -89,7 +119,7 @@ body {
 a,
 a:hover,
 a:visited {
-  color: inherit;
+  color: var(--text-primary);
 }
 
 p {
@@ -98,22 +128,22 @@ p {
 }
 
 button {
-  background: inherit;
-  color: inherit;
+  background: var(--button-bg);
+  color: var(--text-primary);
   font: inherit;
   cursor: pointer;
 }
 
 button:hover,
 button:focus {
-  background: #dfcfbf;
+  background: var(--button-hover-bg);
   outline: none;
 }
 
 button svg {
   width: 11px;
   height: 11px;
-  fill: currentColor;
+  fill: var(--text-primary);
 }
 
 .space-out {
@@ -146,7 +176,13 @@ button svg {
 #github-link svg {
   width: 32px;
   height: 32px;
-  fill: #fed;
+  fill: var(--text-primary);
+}
+
+#welcome {
+  background: var(--background-overlay);
+  padding: 1rem;
+  border-radius: 0.5rem;
 }
 
 #welcome > * + * {
@@ -154,14 +190,25 @@ button svg {
   text-align: justify;
 }
 
+#controls {
+  background: var(--background-overlay);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 #metronome {
   display: inline-flex;
   vertical-align: middle;
-  border: 2px solid #dfcfbf;
+  border: 2px solid var(--element-border);
   border-radius: 0.3rem;
   height: 1.6rem;
   line-height: 1.35rem;
-  background: #efdfcf;
+  background: var(--element-bg);
 }
 
 #metronome > * {
@@ -169,7 +216,7 @@ button svg {
 }
 
 #metronome > * + * {
-  border-left: 2px solid #dfcfbf;
+  border-left: 2px solid var(--element-border);
 }
 
 #metronome.on button.toggle .play,
@@ -184,15 +231,25 @@ button svg {
   min-width: 4.5rem;
 }
 
+#timer {
+  background: var(--background-overlay);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
 #practice {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: var(--background-overlay);
+  padding: 1rem;
+  border-radius: 0.5rem;
 }
 
 #practice > * + * {
-  margin-top: 4rem;
+  margin-top: 1rem;
 }
 
 #practice > section {
@@ -202,7 +259,7 @@ button svg {
   align-items: center;
   height: 2.75rem;
   padding: 0.5rem;
-  border: 2px solid #dfcfbf;
+  border: 2px solid var(--element-border);
 }
 
 #practice > section > div {
@@ -215,12 +272,14 @@ button svg {
 #practice > section.given {
   border-bottom: none;
   border-radius: 0.5rem 0.5rem 0 0;
+  background: var(--element-bg);
+  margin-bottom: 5px;
 }
 
 #practice > section.typed {
   position: relative;
   overflow: hidden;
-  background: #efdfcf;
+  background: var(--element-bg);
   margin-top: 0;
   border-radius: 0 0 0.5rem 0.5rem;
 }
@@ -236,16 +295,17 @@ button svg {
 
 #practice .count {
   font-weight: 700;
+  color: var(--text-secondary);
 }
 
 @keyframes blink {
   0% {
     background: #000;
-    color: #fed;
+    color: var(--text-primary);
   }
   40% {
     background: #000;
-    color: #fed;
+    color: var(--text-primary);
   }
   50% {
     background: transparent;
@@ -257,17 +317,17 @@ button svg {
   }
   100% {
     background: #000;
-    color: #fed;
+    color: var(--text-primary);
   }
 }
 
 #practice > section.given > .hl {
-  background: #dfcfbf;
+  background: var(--highlight-bg);
 }
 
 #practice > section.typed > .hl {
   background: #000;
-  color: #fed;
+  color: var(--text-primary);
 }
 
 #practice > section > .hl.animated {
@@ -279,7 +339,7 @@ button svg {
 }
 
 #practice > section > .err {
-  background: #ff334499;
+  background: var(--error-bg);
   color: #000;
 }
 
@@ -295,7 +355,7 @@ button svg {
 #practice .weights > div {
   display: flex;
   flex-direction: column;
-  border: 2px solid #dfcfbf;
+  border: 2px solid var(--element-border);
   border-radius: 0.3rem;
   min-width: 4.5rem;
 }
@@ -308,8 +368,8 @@ button svg {
 
 #practice .weights > div .weight {
   display: flex;
-  border-top: 2px solid #dfcfbf;
-  background: #efdfcf;
+  border-top: 2px solid var(--element-border);
+  background: var(--element-bg);
 }
 
 #practice .weights > div .weight > * {
@@ -319,7 +379,7 @@ button svg {
 }
 
 #practice .weights > div .weight > * + * {
-  border-left: 2px solid #dfcfbf;
+  border-left: 2px solid var(--element-border);
 }
 
 #practice .weights > div .weight > span {
@@ -340,7 +400,7 @@ button svg {
 }
 
 #practice .weights .controls > * + * {
-  border-top: 2px solid #dfcfbf;
+  border-top: 2px solid var(--element-border);
 }
 
 #practice .weights > .lines {
@@ -354,12 +414,13 @@ button svg {
 }
 
 .dropbtn {
-  background-color: #dfcfbf;
-  color: #000;
+  background-color: var(--button-bg);
+  color: var(--text-primary);
   padding: 16px;
   font-size: 16px;
   border: none;
   cursor: pointer;
+  opacity: 1; /* Ensure fully opaque */
 }
 
 .dropdown {
@@ -370,21 +431,22 @@ button svg {
 .dropdown-content {
   display: none;
   position: absolute;
-  background-color: #f9f9f9;
+  background-color: var(--element-bg);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   z-index: 1;
+  opacity: 1; /* Ensure fully opaque */
 }
 
 .dropdown-content a {
-  color: black;
+  color: var(--text-primary);
   padding: 12px 16px;
   text-decoration: none;
   display: block;
 }
 
 .dropdown-content a:hover {
-  background-color: #dfcfbf;
+  background-color: var(--highlight-bg);
 }
 
 .dropdown:hover .dropdown-content {
@@ -392,7 +454,19 @@ button svg {
 }
 
 .dropdown:hover .dropbtn {
-  background-color: #fdd3ad;
+  background-color: var(--button-hover-bg);
+}
+
+#results {
+  background: #9dd8e72f; 
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+#results h3{
+  margin-bottom: 10px;
+  text-align: center;
+   font-size: 1.5rem;
 }
 
 .charts {
@@ -424,34 +498,36 @@ button svg {
 }
 
 #startBtn, #retryBtn {
-  background-color: #f3e9de;
-  color: #1a1918;
-  border: 2px solid #68401a;
+  background-color: var(--button-bg);
+  color: var(--text-primary);
+  border: 2px solid var(--button-border);
   border-radius: 25px;
   padding: 10px 30px;
   font-size: 1.1rem;
   font-family: "Iosevka", monospace;
   cursor: pointer;
   transition: background-color 0.3s, color 0.3s;
+  opacity: 1; /* Ensure fully opaque */
 }
 
- #retryBtn{
-margin-top: 50px;
- }
+#retryBtn {
+  margin-top: 35px;
+}
 
 #startBtn:hover, #retryBtn:hover {
-  background-color: #6e4f2f;
-  color: #fff;
+  background-color: var(--button-hover-bg);
+  color: var(--text-primary);
 }
 
 #startBtn:focus, #retryBtn:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 0 3px rgba(70, 130, 180, 0.3);
 }
 
 .beat-feedback {
   font-style: italic;
-  color: #824e00;
+  font-size: 25px;
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
   text-align: center;
   min-height: 1.5rem;

@@ -31,6 +31,13 @@ function rootSelectorAll(selector) {
   return document.querySelectorAll(selector);
 }
 
+// Utility function to resolve CSS variables
+function getCSSVariableValue(variableName) {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(variableName)
+    .trim();
+}
+
 class TypingPractice {
   constructor(root) {
     this.dom = {
@@ -220,9 +227,9 @@ class TypingPractice {
 
   getBeatSyncFeedback(deviation) {
     if (this.beatTimes.length === 0) return "";
-    if (deviation <= 150) return "Perfect!";
-    if (deviation <= 250) return "Good";
-    if (deviation <= 350) return "Slow";
+    if (deviation <= 75) return "Perfect!";
+    if (deviation <= 200) return "Good";
+    if (deviation <= 300) return "Slow";
     return "Bad";
   }
 
@@ -288,7 +295,7 @@ class TypingPractice {
           (this.keyPresses.reduce((sum, kp) => sum + kp.deviation, 0) /
             this.keyPresses.length) * 100
         ) / 100
-      : NaN; // Changed from 0 to NaN
+      : NaN;
 
     this.dom.wpm.textContent = wpm;
     this.dom.accuracy.textContent = accuracy;
@@ -300,6 +307,12 @@ class TypingPractice {
   renderCharts() {
     const { wpm, accuracy, avgDeviation } = this.calculateResults();
     Object.values(this.charts).forEach(chart => chart.destroy());
+
+    // Resolve CSS variables to actual color values
+    const chartWpmColor = getCSSVariableValue('--wpm-green');
+    const chartAccuracyColor = getCSSVariableValue('--chart-accuracy');
+    const neutralGrayColor = getCSSVariableValue('--neutral-gray');
+    const wpmGreenColor = getCSSVariableValue('--chart-wpm'); 
 
     const centerTextPlugin = {
       id: 'centerText',
@@ -319,16 +332,16 @@ class TypingPractice {
     };
 
     const getDeviationColor = (dev) => {
-      if (isNaN(dev)) return '#E0E0E0'; // Neutral color for NaN
-      if (dev <= 250) return '#4CAF50';
-      if (dev <= 350) return '#FFC107';
+      if (isNaN(dev)) return neutralGrayColor;
+      if (dev <= 75) return '#4CAF50';
+      if (dev <= 200) return '#FFC107';
       return '#F44336';
     };
 
     const getDeviationLabel = (dev) => {
       if (isNaN(dev)) return 'No Typing';
-      if (dev <= 250) return 'Excellent Timing';
-      if (dev <= 350) return 'Moderate Rhythm';
+      if (dev <= 75) return 'Excellent Timing';
+      if (dev <= 200) return 'Moderate Rhythm';
       return 'Off-beat';
     };
 
@@ -336,7 +349,7 @@ class TypingPractice {
     const deviationFeedback = getDeviationLabel(avgDeviation);
     this.dom.beatFeedback.textContent = deviationFeedback;
 
-    if (!isNaN(avgDeviation) && avgDeviation <= 150) {
+    if (!isNaN(avgDeviation) && avgDeviation <= 75) {
       const confetti = document.createElement('div');
       confetti.classList.add('confetti');
       confetti.textContent = '🎉';
@@ -360,7 +373,7 @@ class TypingPractice {
       data: {
         datasets: [{
           data: [wpm, Math.max(0, 100 - wpm)],
-          backgroundColor: ['#4CAF50', '#E0E0E0'],
+          backgroundColor: [chartWpmColor, wpmGreenColor],
           borderWidth: 0
         }]
       },
@@ -381,7 +394,7 @@ class TypingPractice {
       data: {
         datasets: [{
           data: [accuracy, Math.max(0, 100 - accuracy)],
-          backgroundColor: ['#2196F3', '#E0E0E0'],
+          backgroundColor: [chartAccuracyColor, neutralGrayColor],
           borderWidth: 0
         }]
       },
@@ -404,7 +417,7 @@ class TypingPractice {
       data: {
         datasets: [{
           data: [deviationScore, deviationComplement],
-          backgroundColor: [deviationColor, '#E0E0E0'],
+          backgroundColor: [deviationColor, neutralGrayColor],
           borderWidth: 0
         }]
       },
@@ -470,10 +483,8 @@ class TypingPractice {
     });
 
     this.dom.count.textContent = this.totalCharsTyped;
-    rootSelector("#welcome").style.display =
-      this.gameState === "welcome" ? "block" : "none";
-    rootSelector("#results").style.display =
-      this.gameState === "results" ? "block" : "none";
+    rootSelector("#welcome").style.display = this.gameState === "welcome" ? "block" : "none";
+    rootSelector("#results").style.display = this.gameState === "results" ? "block" : "none";
   }
 
   focus() {
