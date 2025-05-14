@@ -188,7 +188,7 @@ class TypingPractice {
     this.correctChars = 0;
     this.totalCharsTyped = 0;
     this.startTime = null;
-    this.dom.beatFeedback.textContent = ""; // Clear beat feedback
+    this.dom.beatFeedback.textContent = "";
     this._initBuffers();
     this.render();
   }
@@ -200,7 +200,7 @@ class TypingPractice {
     this.beatTimes = [];
     this.correctChars = 0;
     this.totalCharsTyped = 0;
-    this.dom.beatFeedback.textContent = ""; // Clear beat feedback
+    this.dom.beatFeedback.textContent = "";
     this._initBuffers();
     metronome.start();
     this.focus();
@@ -212,7 +212,7 @@ class TypingPractice {
     this.gameState = "results";
     metronome.stop();
     if (this._timerInterval) clearInterval(this._timerInterval);
-    this.dom.beatFeedback.textContent = ""; // Clear beat feedback
+    this.dom.beatFeedback.textContent = "";
     this.calculateResults();
     this.render();
     this.renderCharts();
@@ -220,30 +220,39 @@ class TypingPractice {
 
   getBeatSyncFeedback(deviation) {
     if (this.beatTimes.length === 0) return "";
-    if (deviation <= 50) return "Perfect!";
-    if (deviation <= 100) return "Good";
-    if (deviation <= 200) return "Slow";
+    if (deviation <= 150) return "Perfect!";
+    if (deviation <= 250) return "Good";
+    if (deviation <= 350) return "Slow";
     return "Bad";
   }
 
   advance(key) {
     const currentTime = performance.now();
-    const nearestBeat = this.beatTimes.reduce((prev, curr) =>
-      Math.abs(curr - currentTime) < Math.abs(prev - currentTime) ? curr : prev,
-      this.beatTimes[0]
-    );
-    const deviation = Math.abs(currentTime - nearestBeat);
+    
+    if (this.beatTimes.length === 0) {
+      this.keyPresses.push({
+        char: key,
+        time: currentTime,
+        deviation: 0,
+        correct: key === this.given[this.typed.length]
+      });
+      this.dom.beatFeedback.textContent = "Waiting for beat...";
+    } else {
+      const nearestBeat = this.beatTimes.reduce((prev, curr) =>
+        Math.abs(curr - currentTime) < Math.abs(prev - currentTime) ? curr : prev
+      );
+      const deviation = Math.abs(currentTime - nearestBeat);
 
-    this.keyPresses.push({
-      char: key,
-      time: currentTime,
-      deviation: deviation,
-      correct: key === this.given[this.typed.length]
-    });
+      this.keyPresses.push({
+        char: key,
+        time: currentTime,
+        deviation: deviation,
+        correct: key === this.given[this.typed.length]
+      });
 
-    // Update live beat sync feedback
-    const feedback = this.getBeatSyncFeedback(deviation);
-    this.dom.beatFeedback.textContent = feedback;
+      const feedback = this.getBeatSyncFeedback(deviation);
+      this.dom.beatFeedback.textContent = feedback;
+    }
 
     if (key === this.given[this.typed.length]) {
       this.correctChars++;
@@ -279,44 +288,73 @@ class TypingPractice {
           (this.keyPresses.reduce((sum, kp) => sum + kp.deviation, 0) /
             this.keyPresses.length) * 100
         ) / 100
-      : 0;
+      : NaN; // Changed from 0 to NaN
 
     this.dom.wpm.textContent = wpm;
     this.dom.accuracy.textContent = accuracy;
-    this.dom.beatDeviation.textContent = avgDeviation;
+    this.dom.beatDeviation.textContent = isNaN(avgDeviation) ? "N/A" : avgDeviation;
 
     return { wpm, accuracy, avgDeviation };
   }
 
   renderCharts() {
     const { wpm, accuracy, avgDeviation } = this.calculateResults();
-
-    // Destroy existing charts if they exist
     Object.values(this.charts).forEach(chart => chart.destroy());
 
-    // Plugin to draw text in the center of the doughnut chart
     const centerTextPlugin = {
       id: 'centerText',
       afterDraw(chart) {
         const { ctx, chartArea: { width, height } } = chart;
         const centerX = width / 2;
         const centerY = height / 2;
-
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = 'bold 20px sans-serif';
-
-        // Get the value to display from the chart's metadata
+        ctx.font = 'bold 18px sans-serif';
         const value = chart.config.options.plugins.centerText.value;
-        ctx.fillStyle = chart.data.datasets[0].backgroundColor[0]; // Use the chart's primary color
+        ctx.fillStyle = chart.data.datasets[0].backgroundColor[0];
         ctx.fillText(value, centerX, centerY);
-
         ctx.restore();
       }
     };
 
-    // WPM Chart (max 100)
+    const getDeviationColor = (dev) => {
+      if (isNaN(dev)) return '#E0E0E0'; // Neutral color for NaN
+      if (dev <= 150) return '#4CAF50';
+      if (dev <= 250) return '#FFC107';
+      return '#F44336';
+    };
+
+    const getDeviationLabel = (dev) => {
+      if (isNaN(dev)) return 'No Typing';
+      if (dev <= 250) return 'Excellent Timing';
+      if (dev <= 350) return 'Moderate Rhythm';
+      return 'Off-beat';
+    };
+
+    const deviationColor = getDeviationColor(avgDeviation);
+    const deviationFeedback = getDeviationLabel(avgDeviation);
+    this.dom.beatFeedback.textContent = deviationFeedback;
+
+    if (!isNaN(avgDeviation) && avgDeviation <= 150) {
+      const confetti = document.createElement('div');
+      confetti.classList.add('confetti');
+      confetti.textContent = '🎉';
+      confetti.style.position = 'fixed';
+      confetti.style.top = '30%';
+      confetti.style.left = '50%';
+      confetti.style.fontSize = '3rem';
+      confetti.style.zIndex = 9999;
+      confetti.style.transform = 'translate(-50%, -50%) scale(1)';
+      confetti.style.transition = 'opacity 1s ease-out, transform 1s ease-out';
+      document.body.appendChild(confetti);
+      setTimeout(() => {
+        confetti.style.opacity = 0;
+        confetti.style.transform = 'translate(-50%, -50%) scale(2)';
+      }, 200);
+      setTimeout(() => confetti.remove(), 1200);
+    }
+
     this.charts.wpm = new Chart(this.dom.wpmChart, {
       type: 'doughnut',
       data: {
@@ -331,16 +369,13 @@ class TypingPractice {
         plugins: {
           legend: { display: false },
           tooltip: { enabled: false },
-          centerText: {
-            value: `${wpm}`
-          }
+          centerText: { value: `${wpm}` }
         },
         maintainAspectRatio: false
       },
       plugins: [centerTextPlugin]
     });
 
-    // Accuracy Chart (max 100)
     this.charts.accuracy = new Chart(this.dom.accuracyChart, {
       type: 'doughnut',
       data: {
@@ -355,23 +390,21 @@ class TypingPractice {
         plugins: {
           legend: { display: false },
           tooltip: { enabled: false },
-          centerText: {
-            value: `${accuracy}%`
-          }
+          centerText: { value: `${accuracy}%` }
         },
         maintainAspectRatio: false
       },
       plugins: [centerTextPlugin]
     });
 
-    // Beat Deviation Chart (max 500ms, lower is better)
-    const deviationScore = Math.max(0, 500 - avgDeviation);
+    const deviationScore = isNaN(avgDeviation) ? 0 : Math.max(0, 500 - avgDeviation);
+    const deviationComplement = isNaN(avgDeviation) ? 500 : 500 - deviationScore;
     this.charts.beatDeviation = new Chart(this.dom.beatDeviationChart, {
       type: 'doughnut',
       data: {
         datasets: [{
-          data: [deviationScore, Math.max(0, 500 - deviationScore)],
-          backgroundColor: ['#FF9800', '#E0E0E0'],
+          data: [deviationScore, deviationComplement],
+          backgroundColor: [deviationColor, '#E0E0E0'],
           borderWidth: 0
         }]
       },
@@ -380,9 +413,7 @@ class TypingPractice {
         plugins: {
           legend: { display: false },
           tooltip: { enabled: false },
-          centerText: {
-            value: `${avgDeviation}ms`
-          }
+          centerText: { value: isNaN(avgDeviation) ? "N/A" : `${avgDeviation}ms` }
         },
         maintainAspectRatio: false
       },
@@ -466,6 +497,7 @@ class Metronome {
     this._intervalID = null;
     this._ac = null;
     this._nextTickTime = 0;
+    this._startTime = 0;
     this._initEvents();
     this.render();
   }
@@ -504,7 +536,8 @@ class Metronome {
   }
 
   _scheduleTick(time) {
-    this.practice.beatTimes.push(time * 1000);
+    const adjustedTime = this._startTime + (time * 1000);
+    this.practice.beatTimes.push(adjustedTime);
     const osc = this._ac.createOscillator();
     const envelope = this._ac.createGain();
     osc.frequency.value = 800;
@@ -520,6 +553,7 @@ class Metronome {
   start() {
     if (this.ticking) return;
     this._ac = new (window.AudioContext || window.webkitAudioContext)();
+    this._startTime = performance.now();
     this._nextTickTime = this._ac.currentTime + 60 / this.bpm;
     this._intervalID = setInterval(() => {
       while (this._nextTickTime < this._ac.currentTime + 0.1) {
@@ -536,6 +570,7 @@ class Metronome {
       this._ac.close();
       this._ac = null;
       this._nextTickTime = 0;
+      this._startTime = 0;
       this._intervalID = null;
     }
     this.render();

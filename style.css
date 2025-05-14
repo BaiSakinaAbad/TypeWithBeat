@@ -456,3 +456,13 @@ margin-top: 50px;
   text-align: center;
   min-height: 1.5rem;
 }
+
+.confetti {
+  pointer-events: none;
+  animation: pop 0.8s ease-out forwards;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
