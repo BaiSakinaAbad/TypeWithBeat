@@ -320,8 +320,8 @@ class TypingPractice {
 
     const getDeviationColor = (dev) => {
       if (isNaN(dev)) return '#E0E0E0'; // Neutral color for NaN
-      if (dev <= 150) return '#4CAF50';
-      if (dev <= 250) return '#FFC107';
+      if (dev <= 250) return '#4CAF50';
+      if (dev <= 350) return '#FFC107';
       return '#F44336';
     };
 
