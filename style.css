@@ -9,9 +9,10 @@
   --background-overlay: #333333CC; /* More opaque dark gray for readability */
   --text-primary: #E0E0E0; /* Light gray for primary text */
   --text-secondary: #B0B0B0; /* Slightly darker gray for secondary text */
-  --button-bg: #4682B4; /* Steel blue for buttons */
-  --button-hover-bg: #A9C5D9; /* Lighter blue for hover states */
-  --button-border: #2F4F7F; /* Darker blue for button borders */
+  --button-bg: #4f46b4; /* Steel blue for buttons */
+  --dropdown-bg: #4682B4;
+  --button-hover-bg: #147873; /* Lighter blue for hover states */
+  --button-border: #000000; /* Darker blue for button borders */
   --element-bg: #4A4A4A; /* Dark gray for element backgrounds */
   --element-border: #555555; /* Slightly lighter gray for borders */
   --highlight-bg: #5A7D9A; /* Muted blue for highlights */
@@ -98,7 +99,10 @@ body {
 
 #root > header h1 {
   text-align: center;
-  font-size: 1.75rem;
+  font-size: 4rem;
+  font-family: "Tiny5", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 #root > footer {
@@ -130,7 +134,8 @@ p {
 button {
   background: var(--button-bg);
   color: var(--text-primary);
-  font: inherit;
+  font-size: 20px;
+  font-family: "Jersey 15", sans-serif;
   cursor: pointer;
 }
 
@@ -254,7 +259,7 @@ button svg {
 
 #practice > section {
   width: 100%;
-  font-size: 1.25rem;
+  font-size: 20px;
   display: flex;
   align-items: center;
   height: 2.75rem;
@@ -294,7 +299,8 @@ button svg {
 }
 
 #practice .count {
-  font-weight: 700;
+  font-size: 20px;
+  font-family: "Jersey 15", sans-serif;
   color: var(--text-secondary);
 }
 
@@ -361,6 +367,8 @@ button svg {
 }
 
 #practice .weights .chars {
+  font-size: 20px;
+  font-family: "Jersey 15", sans-serif;
   font-style: italic;
   padding: 0.4rem 0.5rem;
   text-align: center;
@@ -414,13 +422,17 @@ button svg {
 }
 
 .dropbtn {
-  background-color: var(--button-bg);
+  background-color: var(--dropdown-bg);
   color: var(--text-primary);
-  padding: 16px;
-  font-size: 16px;
+  padding: 10px;
+  width:100px;
+  font-size: 20px;
+  font-family: "Jersey 15", sans-serif;
   border: none;
+  border-radius: 10px;
   cursor: pointer;
-  opacity: 1; /* Ensure fully opaque */
+  opacity: 1; 
+
 }
 
 .dropdown {
@@ -433,6 +445,7 @@ button svg {
   position: absolute;
   background-color: var(--element-bg);
   min-width: 160px;
+  padding: 5px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   z-index: 1;
   opacity: 1; /* Ensure fully opaque */
@@ -462,11 +475,15 @@ button svg {
   padding: 1rem;
   border-radius: 0.5rem;
 }
+#results p{
+  margin: 15px 0 0 70px;
+}
 
 #results h3{
   margin-bottom: 10px;
   text-align: center;
-   font-size: 1.5rem;
+  font-size: 3rem;
+  font-family: "Jersey 15", sans-serif;
 }
 
 .charts {
