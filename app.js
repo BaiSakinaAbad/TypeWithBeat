@@ -49,12 +49,13 @@ class TypingPractice {
       wpm: document.querySelector("#wpmValue"),
       accuracy: document.querySelector("#accuracyValue"),
       beatDeviation: document.querySelector("#beatDeviationValue"),
-      timer: root.querySelector("#timer span"),
+      timer: document.querySelector("#mainTimer"), // Updated to use mainTimer
+      preCountdown: document.querySelector("#preCountdown"), // Added for preparatory countdown
       wpmChart: document.querySelector("#wpmChart"),
       accuracyChart: document.querySelector("#accuracyChart"),
       beatDeviationChart: document.querySelector("#beatDeviationChart"),
-      beatFeedback: root.querySelector("#beatFeedback"),
-      startButton: rootSelector("#startBtn"), // Added reference to start button
+      beatFeedback: document.querySelector("#beatFeedback"),
+      startButton: rootSelector("#startBtn"),
     };
 
     this.bufferSize = 35;
@@ -65,7 +66,7 @@ class TypingPractice {
     this.words = { english: [], filipino: [], japanese: [] };
     this.currentLanguage = "english";
     this.timerDuration = 30;
-    this.modeBPM = { easy: 150, medium: 180, hard: 210 };
+    this.modeBPM = { easy: 150, medium: 180, hard: 210, impossible:300 };
     this.currentMode = "medium";
     this.keyPresses = [];
     this.beatTimes = [];
@@ -176,10 +177,30 @@ class TypingPractice {
     this.typed = "";
   }
 
-  // countdown
+  // Start the preparatory countdown (3...2...1...GO)
+  startPreCountdown(callback) {
+    let count = 3;
+    this.dom.preCountdown.textContent = count;
+    this.dom.timer.textContent = ""; // Clear main timer during pre-countdown
+    const interval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        this.dom.preCountdown.textContent = count;
+      } else if (count === 0) {
+        this.dom.preCountdown.textContent = "GO";
+      } else {
+        this.dom.preCountdown.textContent = "";
+        clearInterval(interval);
+        callback(); // Proceed to main game logic
+      }
+    }, 1000);
+  }
+
+  // Modified countdown to use mainTimer and clear preCountdown
   startCountdown() {
     let remaining = this.timerDuration;
     this.dom.timer.textContent = remaining;
+    this.dom.preCountdown.textContent = ""; // Ensure preCountdown is cleared
 
     this._timerInterval = setInterval(() => {
       if (remaining > 0) {
@@ -202,23 +223,29 @@ class TypingPractice {
     this.dom.beatFeedback.textContent = "";
     this._initBuffers();
     this.dom.startButton.disabled = false; // Re-enable start button when resetting
+    this.dom.preCountdown.textContent = ""; // Clear pre-countdown display
+    this.dom.timer.textContent = this.timerDuration; // Reset main timer display
     this.render();
   }
 
   startGame() {
-    this.gameState = "playing";
-    this.startTime = performance.now();
-    this.keyPresses = [];
-    this.beatTimes = [];
-    this.correctChars = 0;
-    this.totalCharsTyped = 0;
-    this.dom.beatFeedback.textContent = "";
-    this._initBuffers();
-    this.dom.startButton.disabled = true; // Disable start button when game starts
-    metronome.start();
-    this.focus();
-    this.startCountdown();
-    setTimeout(() => this.endGame(), this.timerDuration * 1000);
+    this.dom.startButton.disabled = true; // Disable start button at the start
+    this.gameState = "pre-countdown"; // Temporary state for countdown
+    this.startPreCountdown(() => {
+      // Main game logic after countdown
+      this.gameState = "playing";
+      this.startTime = performance.now();
+      this.keyPresses = [];
+      this.beatTimes = [];
+      this.correctChars = 0;
+      this.totalCharsTyped = 0;
+      this.dom.beatFeedback.textContent = "";
+      this._initBuffers();
+      metronome.start();
+      this.focus();
+      this.startCountdown();
+      setTimeout(() => this.endGame(), this.timerDuration * 1000);
+    });
   }
 
   endGame() {
@@ -226,6 +253,7 @@ class TypingPractice {
     metronome.stop();
     if (this._timerInterval) clearInterval(this._timerInterval);
     this.dom.beatFeedback.textContent = "";
+    this.dom.preCountdown.textContent = ""; // Clear pre-countdown display
     this.calculateResults();
     this.dom.startButton.disabled = false; // Re-enable start button when game ends
     this.render();
@@ -239,16 +267,16 @@ class TypingPractice {
     if (deviation <= 300) return "Slow";
     return "Bad";
   }
-
+// main logic for the game
   advance(key) {
-    const currentTime = performance.now();
+    const currentTime = performance.now(); //starts to get the start local time
     
     if (this.beatTimes.length === 0) {
       this.keyPresses.push({
         char: key,
         time: currentTime,
         deviation: 0,
-        correct: key === this.given[this.typed.length]
+        correct: key === this.given[this.typed.length] // string mathing algo, example, if 'c' === 'c'
       });
       this.dom.beatFeedback.textContent = "Waiting for beat...";
     } else {
@@ -293,8 +321,8 @@ class TypingPractice {
 
   calculateResults() {
     const durationMinutes = this.timerDuration / 60;
-    const wpm = Math.round((this.correctChars / 5) / durationMinutes);
-    const accuracy = this.keyPresses.length
+    const wpm = Math.round((this.correctChars / 5) / durationMinutes); // WPM FORMULA, this can also be all (typedChar-incorrect /5)/min
+    const accuracy = this.keyPresses.length // accuracy calculate 
       ? Math.round((this.correctChars / this.keyPresses.length) * 100)
       : 0;
     const avgDeviation = this.keyPresses.length
@@ -338,6 +366,7 @@ class TypingPractice {
       }
     };
 
+    //deviation label and color indicator
     const getDeviationColor = (dev) => {
       if (isNaN(dev)) return neutralGrayColor;
       if (dev <= 75) return '#4CAF50';
@@ -349,13 +378,14 @@ class TypingPractice {
       if (isNaN(dev)) return 'No Typing';
       if (dev <= 75) return 'Excellent Timing';
       if (dev <= 200) return 'Moderate Rhythm';
-      return 'Off-beat';
+      return 'Off-beat, more practice';
     };
 
     const deviationColor = getDeviationColor(avgDeviation);
     const deviationFeedback = getDeviationLabel(avgDeviation);
     this.dom.beatFeedback.textContent = deviationFeedback;
 
+    //animation of 🎉 when getting Excellent Timing
     if (!isNaN(avgDeviation) && avgDeviation <= 75) {
       const confetti = document.createElement('div');
       confetti.classList.add('confetti');
@@ -374,7 +404,7 @@ class TypingPractice {
       }, 200);
       setTimeout(() => confetti.remove(), 1200);
     }
-
+// rendering charts
     this.charts.wpm = new Chart(this.dom.wpmChart, {
       type: 'doughnut',
       data: {
@@ -416,7 +446,7 @@ class TypingPractice {
       },
       plugins: [centerTextPlugin]
     });
-
+// avg beat dev chart
     const deviationScore = isNaN(avgDeviation) ? 0 : Math.max(0, 500 - avgDeviation);
     const deviationComplement = isNaN(avgDeviation) ? 500 : 500 - deviationScore;
     this.charts.beatDeviation = new Chart(this.dom.beatDeviationChart, {
@@ -501,6 +531,8 @@ class TypingPractice {
   }
 }
 
+
+//metronome class
 class Metronome {
   constructor(root, practice) {
     this.dom = {

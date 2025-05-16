@@ -66,7 +66,7 @@
       <ol>
         <li>Select a language (English, Filipino or Japanese (Romanize))</li>
         <li>Choose a timer duration (15s, 30s, 60s)</li>
-        <li>Select a difficulty mode (Easy: 150 BPM, Medium: 180 BPM, Hard: 210 BPM)</li>
+        <li>Select a difficulty mode (Easy: 150 BPM, Medium: 180 BPM, Hard: 210 BPM, Impossible: 300 BPM)</li>
         <li>Click Start or toggle the metronome to begin typing words in sync with the beat</li>
         <li>Type accurately and match the beat for best results!</li>
       </ol>
@@ -101,6 +101,7 @@
           <a href="#" data-mode="easy">Easy (150 BPM)</a>
           <a href="#" data-mode="medium">Medium (180 BPM)</a>
           <a href="#" data-mode="hard">Hard (210 BPM)</a>
+           <a href="#" data-mode="impossible">Impossible (300 BPM)</a>
         </div>
       </div>
 
@@ -129,7 +130,8 @@
         <button id="startBtn">Start</button>
       </div>
       <div id="timer">
-        <p>Time Left: <span>0</span></p>
+        <p id="preCountdown"><span id="preCountdown"></span></p>
+        <p>Time Left: <span id="mainTimer">0</span></p> <!-- Added preCountdown span -->
       </div>
       <section class="given"></section>
       <section class="typed">
