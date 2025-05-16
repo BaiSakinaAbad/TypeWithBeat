@@ -175,18 +175,21 @@ class TypingPractice {
     this.typed = "";
   }
 
-  startCountdown() {
+// countdown
+ startCountdown() {
     let remaining = this.timerDuration;
     this.dom.timer.textContent = remaining;
 
     this._timerInterval = setInterval(() => {
-      remaining--;
-      this.dom.timer.textContent = remaining;
+      if (remaining > 0) {
+        remaining--;
+        this.dom.timer.textContent = remaining;
+      }
       if (remaining <= 0) {
         clearInterval(this._timerInterval);
       }
     }, 1000);
-  }
+}
 
   resetGame() {
     this.gameState = "welcome";
@@ -586,7 +589,7 @@ class Metronome {
     }
     this.render();
   }
-
+ 
   toggle() {
     return this.ticking ? this.stop() : this.start();
   }
