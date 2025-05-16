@@ -54,6 +54,7 @@ class TypingPractice {
       accuracyChart: document.querySelector("#accuracyChart"),
       beatDeviationChart: document.querySelector("#beatDeviationChart"),
       beatFeedback: root.querySelector("#beatFeedback"),
+      startButton: rootSelector("#startBtn"), // Added reference to start button
     };
 
     this.bufferSize = 35;
@@ -156,7 +157,7 @@ class TypingPractice {
       });
     });
 
-    rootSelector("#startBtn").addEventListener("click", () => {
+    this.dom.startButton.addEventListener("click", () => {
       this.startGame();
     });
 
@@ -175,8 +176,8 @@ class TypingPractice {
     this.typed = "";
   }
 
-// countdown
- startCountdown() {
+  // countdown
+  startCountdown() {
     let remaining = this.timerDuration;
     this.dom.timer.textContent = remaining;
 
@@ -189,7 +190,7 @@ class TypingPractice {
         clearInterval(this._timerInterval);
       }
     }, 1000);
-}
+  }
 
   resetGame() {
     this.gameState = "welcome";
@@ -200,6 +201,7 @@ class TypingPractice {
     this.startTime = null;
     this.dom.beatFeedback.textContent = "";
     this._initBuffers();
+    this.dom.startButton.disabled = false; // Re-enable start button when resetting
     this.render();
   }
 
@@ -212,6 +214,7 @@ class TypingPractice {
     this.totalCharsTyped = 0;
     this.dom.beatFeedback.textContent = "";
     this._initBuffers();
+    this.dom.startButton.disabled = true; // Disable start button when game starts
     metronome.start();
     this.focus();
     this.startCountdown();
@@ -224,6 +227,7 @@ class TypingPractice {
     if (this._timerInterval) clearInterval(this._timerInterval);
     this.dom.beatFeedback.textContent = "";
     this.calculateResults();
+    this.dom.startButton.disabled = false; // Re-enable start button when game ends
     this.render();
     this.renderCharts();
   }
