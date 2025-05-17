@@ -227,8 +227,8 @@ class TypingPractice {
   startCountdown() {
     let remaining = this.timerDuration; // Initialize with game duration
     this.dom.timer.textContent = remaining;
-    this.dom.preCountdown.textContent = ""; // Clear pre-countdown text
-
+    this.dom.preCountdown.textContent = ""; 
+     
     // Update timer every second
     this._timerInterval = setInterval(() => {
       if (remaining > 0) {
@@ -319,14 +319,14 @@ class TypingPractice {
       const nearestBeat = this.beatTimes.reduce((prev, curr) =>
         Math.abs(curr - currentTime) < Math.abs(prev - currentTime) ? curr : prev
       );
-      const deviation = Math.abs(currentTime - nearestBeat); // Calculate time difference
+      const deviation = Math.abs(currentTime - nearestBeat); // Calculate time difference for deviation
 
       // Record key press details
       this.keyPresses.push({
         char: key,
         time: currentTime,
         deviation: deviation,
-        correct: key === this.given[this.typed.length] // String matching: compare typed key to expected
+        correct: key === this.given[this.typed.length] // String matching
       });
 
       // Show beat sync feedback
