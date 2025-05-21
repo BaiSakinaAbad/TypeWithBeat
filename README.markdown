@@ -33,7 +33,7 @@ Whether you're a beginner typist or a seasoned pro, Type with Beat provides a dy
 ## UI Preview
 Below is a preview of the Type with Beat user interface, showcasing the gameplay, settings, and result charts:
 
-![Type with Beat Gameplay](typing-practice\assets\welcomUI.png)
+![Type with Beat Gameplay](https://github.com/BaiSakinaAbad/TypeWithBeat/blob/main/assets/welcomUI.png?raw=true)
 
 *Note*: Ensure the `typewithbeat_preview.gif` file is placed in the `assets` folder of the repository. If you haven't created the GIF yet, you can record a short clip of the game (e.g., selecting a language, typing to the beat, and viewing results) using a screen recording tool and convert it to GIF format.
 
